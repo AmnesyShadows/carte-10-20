@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Rivage WL - Carte Interactive des 10-20</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <header>
+        <div class="header-title">
+            <h1>Rivage WL</h1>
+            <span>Carte interactive des 10-20</span>
+        </div>
+
+        <div class="search-container">
+            <input
+                type="text"
+                id="search"
+                placeholder="Rechercher un lieu..."
+            >
+        </div>
+    </header>
+
+    <main>
+        <!-- SIDEBAR -->
+        <aside id="sidebar">
+            <h2>Filtres</h2>
+            <div class="filters">
+
+                <label>
+                    <input
+                        type="checkbox"
+                        class="filter"
+                        value="police"
+                        checked
+                    >
+                    <span class="filter-icon police-icon">🚓</span>
+                    Polices
+                </label>
+                <label>
+                    <input
+                        type="checkbox"
+                        class="filter"
+                        value="hospital"
+                        checked
+                    >
+                    <span class="filter-icon">🏥</span>
+                    Hôpitaux
+                </label>
+                <label>
+                    <input
+                        type="checkbox"
+                        class="filter"
+                        value="company"
+                        checked
+                    >
+                    <span class="filter-icon">🚒</span>
+                    Entreprises
+                </label>
+                <label>
+                    <input
+                        type="checkbox"
+                        class="filter"
+                        value="government"
+                        checked
+                    >
+                    <span class="filter-icon">🏛️</span>
+                    Gouvernement
+                </label>
+                <label>
+                    <input
+                        type="checkbox"
+                        class="filter"
+                        value="other"
+                        checked
+                    >
+                    <span class="filter-icon">📍</span>
+                    Autres
+                </label>
+
+            </div>
+            <hr>
+            <h2>Lieux</h2>
+            <div id="location-list"></div>
+        </aside>
+
+        <!-- CARTE -->
+        <section id="map-container">
+            <div id="map"></div>
+            <button id="sidebar-toggle">
+                ☰
+            </button>
+        </section>
+    </main>
+
+    <!-- LEAFLET -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- NOTRE JS -->
+    <script src="script.js"></script>
+
+</body>
+</html>

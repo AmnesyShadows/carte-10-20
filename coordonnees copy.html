@@ -1,0 +1,1600 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Coordonnées - Carte GTA V</title>
+
+    <style>
+
+        /* =========================================
+           RESET
+        ========================================= */
+
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            width: 100%;
+            height: 100%;
+
+            margin: 0;
+            padding: 0;
+
+            overflow: hidden;
+
+            font-family:
+                Arial,
+                Helvetica,
+                sans-serif;
+
+            background: #111;
+            color: white;
+        }
+
+
+        /* =========================================
+           HEADER
+        ========================================= */
+
+        header {
+
+            height: 65px;
+
+            background: #181818;
+
+            border-bottom:
+                1px solid #333;
+
+            display: flex;
+
+            align-items: center;
+
+            justify-content: space-between;
+
+            padding:
+                0 20px;
+
+            position: relative;
+
+            z-index: 100;
+        }
+
+
+        header h1 {
+
+            margin: 0;
+
+            font-size: 20px;
+
+        }
+
+
+        header span {
+
+            color: #888;
+
+            font-size: 13px;
+
+        }
+
+
+        /* =========================================
+           ZONE DE CARTE
+        ========================================= */
+
+        #map-wrapper {
+
+            position: absolute;
+
+            top: 65px;
+            left: 0;
+            right: 0;
+            bottom: 0;
+
+            overflow: hidden;
+
+            background: #222;
+
+            cursor: grab;
+
+        }
+
+
+        #map-wrapper.dragging {
+
+            cursor: grabbing;
+
+        }
+
+
+        /*
+         * Conteneur qui sera déplacé
+         * et zoomé.
+         */
+
+        #map-container {
+
+            position: absolute;
+
+            left: 0;
+            top: 0;
+
+            transform-origin:
+                0 0;
+
+        }
+
+
+        /*
+         * Image originale
+         */
+
+        #map {
+
+            display: block;
+
+            user-select: none;
+
+            -webkit-user-drag: none;
+
+            pointer-events: none;
+
+        }
+
+
+        /* =========================================
+           MARQUEUR
+        ========================================= */
+
+        #marker {
+
+            position: absolute;
+
+            width: 20px;
+            height: 20px;
+
+            border-radius: 50%;
+
+            background: red;
+
+            border:
+                3px solid white;
+
+            box-shadow:
+                0 0 0 2px red,
+                0 0 10px rgba(0, 0, 0, 0.8);
+
+            transform:
+                translate(-50%, -50%);
+
+            pointer-events: none;
+
+            display: none;
+
+            z-index: 10;
+
+        }
+
+
+        /* =========================================
+           CONTROLES DE ZOOM
+        ========================================= */
+
+        #zoom-controls {
+
+            position: absolute;
+
+            top: 20px;
+            left: 20px;
+
+            display: flex;
+
+            flex-direction: column;
+
+            gap: 5px;
+
+            z-index: 50;
+
+        }
+
+
+        .zoom-button {
+
+            width: 42px;
+            height: 42px;
+
+            border: 1px solid #444;
+
+            border-radius: 6px;
+
+            background:
+                rgba(25, 25, 25, 0.95);
+
+            color: white;
+
+            font-size: 22px;
+
+            cursor: pointer;
+
+        }
+
+
+        .zoom-button:hover {
+
+            background: #333;
+
+        }
+
+
+        #zoom-level {
+
+            width: 42px;
+
+            padding: 6px 0;
+
+            text-align: center;
+
+            font-size: 11px;
+
+            color: #aaa;
+
+            background:
+                rgba(25, 25, 25, 0.95);
+
+            border-radius: 5px;
+
+        }
+
+
+        /* =========================================
+           PANNEAU COORDONNEES
+        ========================================= */
+
+        #coordinates {
+
+            position: absolute;
+
+            top: 20px;
+            right: 20px;
+
+            width: 270px;
+
+            background:
+                rgba(25, 25, 25, 0.96);
+
+            border:
+                1px solid #444;
+
+            border-radius: 8px;
+
+            padding: 18px;
+
+            box-shadow:
+                0 5px 25px
+                rgba(0, 0, 0, 0.5);
+
+            z-index: 50;
+
+        }
+
+
+        #coordinates h2 {
+
+            margin:
+                0 0 15px 0;
+
+            font-size: 16px;
+
+        }
+
+
+        .coordinate {
+
+            display: flex;
+
+            justify-content:
+                space-between;
+
+            align-items: center;
+
+            margin-bottom: 10px;
+
+        }
+
+
+        .coordinate-label {
+
+            color: #999;
+
+        }
+
+
+        .coordinate-value {
+
+            font-family:
+                Consolas,
+                monospace;
+
+            font-size: 16px;
+
+            color: #4ade80;
+
+        }
+
+
+        .separator {
+
+            border: none;
+
+            border-top:
+                1px solid #333;
+
+            margin:
+                15px 0;
+
+        }
+
+
+        #copy-button {
+
+            width: 100%;
+
+            padding: 10px;
+
+            border: none;
+
+            border-radius: 5px;
+
+            background: #2d7dd2;
+
+            color: white;
+
+            font-weight: bold;
+
+            cursor: pointer;
+
+        }
+
+
+        #copy-button:hover {
+
+            background: #2368b2;
+
+        }
+
+
+        #copy-button:disabled {
+
+            background: #444;
+
+            color: #888;
+
+            cursor: not-allowed;
+
+        }
+
+
+        /* =========================================
+           POSITION SOURIS
+        ========================================= */
+
+        #mouse-position {
+
+            position: absolute;
+
+            left: 20px;
+            bottom: 20px;
+
+            padding:
+                8px 12px;
+
+            background:
+                rgba(25, 25, 25, 0.95);
+
+            border:
+                1px solid #444;
+
+            border-radius: 5px;
+
+            font-family:
+                Consolas,
+                monospace;
+
+            font-size: 13px;
+
+            color: #aaa;
+
+            z-index: 50;
+
+        }
+
+
+        /* =========================================
+           INFO CARTE
+        ========================================= */
+
+        #map-info {
+
+            position: absolute;
+
+            right: 20px;
+            bottom: 20px;
+
+            padding:
+                8px 12px;
+
+            background:
+                rgba(25, 25, 25, 0.95);
+
+            border:
+                1px solid #444;
+
+            border-radius: 5px;
+
+            font-size: 12px;
+
+            color: #aaa;
+
+            z-index: 50;
+
+        }
+
+
+        /* =========================================
+           CHARGEMENT
+        ========================================= */
+
+        #loading {
+
+            position: fixed;
+
+            inset: 0;
+
+            background: #111;
+
+            display: flex;
+
+            justify-content: center;
+
+            align-items: center;
+
+            z-index: 999;
+
+            font-size: 18px;
+
+        }
+
+
+        #loading.hidden {
+
+            display: none;
+
+        }
+
+
+        /* =========================================
+           MOBILE
+        ========================================= */
+
+        @media (max-width: 700px) {
+
+            #coordinates {
+
+                width: 220px;
+
+                top: 15px;
+                right: 15px;
+
+                padding: 12px;
+
+            }
+
+
+            #coordinates h2 {
+
+                font-size: 14px;
+
+            }
+
+
+            #map-info {
+
+                display: none;
+
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- =========================================
+         HEADER
+    ========================================= -->
+
+    <header>
+
+        <div>
+
+            <h1>
+                🗺️ Coordonnées - Carte GTA V
+            </h1>
+
+            <span>
+                Molette : zoom • Clic gauche : déplacer • Clic : coordonnées
+            </span>
+
+        </div>
+
+    </header>
+
+
+    <!-- =========================================
+         CHARGEMENT
+    ========================================= -->
+
+    <div id="loading">
+
+        Chargement de la carte...
+
+    </div>
+
+
+    <!-- =========================================
+         ZONE CARTE
+    ========================================= -->
+
+    <div id="map-wrapper">
+
+
+        <!-- CONTROLES ZOOM -->
+
+        <div id="zoom-controls">
+
+            <button
+                id="zoom-in"
+                class="zoom-button"
+            >
+                +
+            </button>
+
+
+            <div id="zoom-level">
+                100%
+            </div>
+
+
+            <button
+                id="zoom-out"
+                class="zoom-button"
+            >
+                −
+            </button>
+
+
+            <button
+                id="zoom-reset"
+                class="zoom-button"
+                title="Réinitialiser"
+            >
+                ⌂
+            </button>
+
+        </div>
+
+
+        <!-- CARTE -->
+
+        <div id="map-container">
+
+            <img
+                id="map"
+                src="map.jpg"
+                alt="Carte GTA V"
+            >
+
+            <div id="marker"></div>
+
+        </div>
+
+
+        <!-- POSITION SOURIS -->
+
+        <div id="mouse-position">
+
+            Souris :
+            X -
+            Y -
+
+        </div>
+
+
+        <!-- INFORMATIONS -->
+
+        <div id="map-info">
+
+            Zoom :
+            <span id="zoom-text">
+                100%
+            </span>
+
+            •
+
+            Image :
+            <span id="image-size">
+                -
+            </span>
+
+        </div>
+
+
+        <!-- =====================================
+             COORDONNEES
+        ====================================== -->
+
+        <div id="coordinates">
+
+            <h2>
+                📍 Coordonnées du point
+            </h2>
+
+
+            <div class="coordinate">
+
+                <span class="coordinate-label">
+                    X
+                </span>
+
+                <span
+                    id="x-value"
+                    class="coordinate-value"
+                >
+                    -
+                </span>
+
+            </div>
+
+
+            <div class="coordinate">
+
+                <span class="coordinate-label">
+                    Y
+                </span>
+
+                <span
+                    id="y-value"
+                    class="coordinate-value"
+                >
+                    -
+                </span>
+
+            </div>
+
+
+            <hr class="separator">
+
+
+            <div class="coordinate">
+
+                <span class="coordinate-label">
+                    Largeur
+                </span>
+
+                <span
+                    id="width-value"
+                    class="coordinate-value"
+                >
+                    -
+                </span>
+
+            </div>
+
+
+            <div class="coordinate">
+
+                <span class="coordinate-label">
+                    Hauteur
+                </span>
+
+                <span
+                    id="height-value"
+                    class="coordinate-value"
+                >
+                    -
+                </span>
+
+            </div>
+
+
+            <button
+                id="copy-button"
+                disabled
+            >
+                📋 Copier les coordonnées
+            </button>
+
+        </div>
+
+
+    </div>
+
+
+    <script>
+
+        // =========================================
+        // ELEMENTS
+        // =========================================
+
+        const wrapper =
+            document.getElementById(
+                "map-wrapper"
+            );
+
+
+        const container =
+            document.getElementById(
+                "map-container"
+            );
+
+
+        const map =
+            document.getElementById(
+                "map"
+            );
+
+
+        const marker =
+            document.getElementById(
+                "marker"
+            );
+
+
+        const loading =
+            document.getElementById(
+                "loading"
+            );
+
+
+        const xValue =
+            document.getElementById(
+                "x-value"
+            );
+
+
+        const yValue =
+            document.getElementById(
+                "y-value"
+            );
+
+
+        const widthValue =
+            document.getElementById(
+                "width-value"
+            );
+
+
+        const heightValue =
+            document.getElementById(
+                "height-value"
+            );
+
+
+        const copyButton =
+            document.getElementById(
+                "copy-button"
+            );
+
+
+        const mousePosition =
+            document.getElementById(
+                "mouse-position"
+            );
+
+
+        const imageSize =
+            document.getElementById(
+                "image-size"
+            );
+
+
+        const zoomLevel =
+            document.getElementById(
+                "zoom-level"
+            );
+
+
+        const zoomText =
+            document.getElementById(
+                "zoom-text"
+            );
+
+
+        // =========================================
+        // VARIABLES
+        // =========================================
+
+        let scale = 1;
+
+        let offsetX = 0;
+
+        let offsetY = 0;
+
+
+        let currentX = null;
+
+        let currentY = null;
+
+
+        let isDragging = false;
+
+        let dragStartX = 0;
+
+        let dragStartY = 0;
+
+        let initialOffsetX = 0;
+
+        let initialOffsetY = 0;
+
+
+        // =========================================
+        // ZOOM
+        // =========================================
+
+        const MIN_ZOOM = 0.1;
+
+        const MAX_ZOOM = 8;
+
+        const ZOOM_STEP = 1.25;
+
+
+        // =========================================
+        // CHARGEMENT IMAGE
+        // =========================================
+
+        map.addEventListener(
+            "load",
+            () => {
+
+                loading.classList.add(
+                    "hidden"
+                );
+
+
+                imageSize.textContent =
+                    `${map.naturalWidth} × ${map.naturalHeight}`;
+
+
+                widthValue.textContent =
+                    map.naturalWidth;
+
+
+                heightValue.textContent =
+                    map.naturalHeight;
+
+
+                /*
+                 * On initialise la carte
+                 * à une taille adaptée
+                 * à l'écran.
+                 */
+
+                fitMap();
+
+            }
+        );
+
+
+        // =========================================
+        // ADAPTER LA CARTE A L'ECRAN
+        // =========================================
+
+        function fitMap() {
+
+            const wrapperWidth =
+                wrapper.clientWidth;
+
+
+            const wrapperHeight =
+                wrapper.clientHeight;
+
+
+            const imageWidth =
+                map.naturalWidth;
+
+
+            const imageHeight =
+                map.naturalHeight;
+
+
+            const scaleX =
+                wrapperWidth /
+                imageWidth;
+
+
+            const scaleY =
+                wrapperHeight /
+                imageHeight;
+
+
+            /*
+             * On prend le plus petit ratio
+             * pour que toute la carte
+             * soit visible.
+             */
+
+            scale =
+                Math.min(
+                    scaleX,
+                    scaleY
+                );
+
+
+            /*
+             * On ne descend pas
+             * en dessous de 10%.
+             */
+
+            scale =
+                Math.max(
+                    scale,
+                    MIN_ZOOM
+                );
+
+
+            /*
+             * Centrage.
+             */
+
+            offsetX =
+                (
+                    wrapperWidth -
+                    imageWidth * scale
+                ) / 2;
+
+
+            offsetY =
+                (
+                    wrapperHeight -
+                    imageHeight * scale
+                ) / 2;
+
+
+            updateTransform();
+
+        }
+
+
+        // =========================================
+        // TRANSFORMATION
+        // =========================================
+
+        function updateTransform() {
+
+            container.style.transform =
+                `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+
+
+            const percentage =
+                Math.round(
+                    scale * 100
+                );
+
+
+            zoomLevel.textContent =
+                `${percentage}%`;
+
+
+            zoomText.textContent =
+                `${percentage}%`;
+
+        }
+
+
+        // =========================================
+        // ZOOM AUTOUR D'UN POINT
+        // =========================================
+
+        function zoomAt(
+            mouseX,
+            mouseY,
+            newScale
+        ) {
+
+            /*
+             * On récupère la position
+             * du point dans l'image AVANT
+             * le zoom.
+             */
+
+            const imageX =
+                (
+                    mouseX -
+                    offsetX
+                ) / scale;
+
+
+            const imageY =
+                (
+                    mouseY -
+                    offsetY
+                ) / scale;
+
+
+            /*
+             * Nouvelle échelle.
+             */
+
+            scale =
+                Math.max(
+                    MIN_ZOOM,
+                    Math.min(
+                        MAX_ZOOM,
+                        newScale
+                    )
+                );
+
+
+            /*
+             * On garde le même point
+             * sous la souris.
+             */
+
+            offsetX =
+                mouseX -
+                imageX * scale;
+
+
+            offsetY =
+                mouseY -
+                imageY * scale;
+
+
+            updateTransform();
+
+        }
+
+
+        // =========================================
+        // BOUTON +
+        // =========================================
+
+        document
+            .getElementById("zoom-in")
+            .addEventListener(
+                "click",
+                () => {
+
+                    const centerX =
+                        wrapper.clientWidth / 2;
+
+
+                    const centerY =
+                        wrapper.clientHeight / 2;
+
+
+                    zoomAt(
+                        centerX,
+                        centerY,
+                        scale * ZOOM_STEP
+                    );
+
+                }
+            );
+
+
+        // =========================================
+        // BOUTON -
+        // =========================================
+
+        document
+            .getElementById("zoom-out")
+            .addEventListener(
+                "click",
+                () => {
+
+                    const centerX =
+                        wrapper.clientWidth / 2;
+
+
+                    const centerY =
+                        wrapper.clientHeight / 2;
+
+
+                    zoomAt(
+                        centerX,
+                        centerY,
+                        scale / ZOOM_STEP
+                    );
+
+                }
+            );
+
+
+        // =========================================
+        // RESET
+        // =========================================
+
+        document
+            .getElementById("zoom-reset")
+            .addEventListener(
+                "click",
+                () => {
+
+                    fitMap();
+
+                    marker.style.display =
+                        "none";
+
+                    currentX = null;
+
+                    currentY = null;
+
+                    xValue.textContent =
+                        "-";
+
+                    yValue.textContent =
+                        "-";
+
+                    copyButton.disabled =
+                        true;
+
+                }
+            );
+
+
+        // =========================================
+        // MOLETTE
+        // =========================================
+
+        wrapper.addEventListener(
+            "wheel",
+            (event) => {
+
+                event.preventDefault();
+
+
+                const rect =
+                    wrapper.getBoundingClientRect();
+
+
+                const mouseX =
+                    event.clientX -
+                    rect.left;
+
+
+                const mouseY =
+                    event.clientY -
+                    rect.top;
+
+
+                let newScale;
+
+
+                if (event.deltaY < 0) {
+
+                    newScale =
+                        scale * ZOOM_STEP;
+
+                } else {
+
+                    newScale =
+                        scale / ZOOM_STEP;
+
+                }
+
+
+                zoomAt(
+                    mouseX,
+                    mouseY,
+                    newScale
+                );
+
+            },
+            {
+                passive: false
+            }
+        );
+
+
+        // =========================================
+        // DEPLACEMENT
+        // =========================================
+
+        wrapper.addEventListener(
+            "mousedown",
+            (event) => {
+
+                /*
+                 * On déplace uniquement
+                 * avec le clic gauche.
+                 */
+
+                if (event.button !== 0) {
+
+                    return;
+
+                }
+
+
+                isDragging = true;
+
+
+                dragStartX =
+                    event.clientX;
+
+
+                dragStartY =
+                    event.clientY;
+
+
+                initialOffsetX =
+                    offsetX;
+
+
+                initialOffsetY =
+                    offsetY;
+
+
+                wrapper.classList.add(
+                    "dragging"
+                );
+
+            }
+        );
+
+
+        window.addEventListener(
+            "mousemove",
+            (event) => {
+
+                if (!isDragging) {
+
+                    return;
+
+                }
+
+
+                const deltaX =
+                    event.clientX -
+                    dragStartX;
+
+
+                const deltaY =
+                    event.clientY -
+                    dragStartY;
+
+
+                offsetX =
+                    initialOffsetX +
+                    deltaX;
+
+
+                offsetY =
+                    initialOffsetY +
+                    deltaY;
+
+
+                updateTransform();
+
+            }
+        );
+
+
+        window.addEventListener(
+            "mouseup",
+            () => {
+
+                if (!isDragging) {
+
+                    return;
+
+                }
+
+
+                isDragging = false;
+
+
+                wrapper.classList.remove(
+                    "dragging"
+                );
+
+            }
+        );
+
+
+        // =========================================
+        // COORDONNEES D'UN CLIC
+        // =========================================
+
+        wrapper.addEventListener(
+            "click",
+            (event) => {
+
+                /*
+                 * Si on vient de déplacer
+                 * la carte, on ne considère
+                 * pas cela comme un clic.
+                 */
+
+                if (
+                    Math.abs(
+                        event.clientX -
+                        dragStartX
+                    ) > 5 ||
+                    Math.abs(
+                        event.clientY -
+                        dragStartY
+                    ) > 5
+                ) {
+
+                    return;
+
+                }
+
+
+                /*
+                 * Position dans le wrapper.
+                 */
+
+                const rect =
+                    wrapper.getBoundingClientRect();
+
+
+                const wrapperX =
+                    event.clientX -
+                    rect.left;
+
+
+                const wrapperY =
+                    event.clientY -
+                    rect.top;
+
+
+                /*
+                 * Conversion en coordonnées
+                 * de l'image originale.
+                 */
+
+                const imageX =
+                    (
+                        wrapperX -
+                        offsetX
+                    ) / scale;
+
+
+                const imageY =
+                    (
+                        wrapperY -
+                        offsetY
+                    ) / scale;
+
+
+                /*
+                 * Vérification :
+                 * le clic doit être dans l'image.
+                 */
+
+                if (
+                    imageX < 0 ||
+                    imageY < 0 ||
+                    imageX > map.naturalWidth ||
+                    imageY > map.naturalHeight
+                ) {
+
+                    return;
+
+                }
+
+
+                currentX =
+                    Math.round(
+                        imageX
+                    );
+
+
+                currentY =
+                    Math.round(
+                        imageY
+                    );
+
+
+                /*
+                 * Affichage.
+                 */
+
+                xValue.textContent =
+                    currentX;
+
+
+                yValue.textContent =
+                    currentY;
+
+
+                /*
+                 * Position du marqueur.
+                 *
+                 * Comme le marqueur est
+                 * dans le container,
+                 * on utilise directement
+                 * les coordonnées originales.
+                 */
+
+                marker.style.left =
+                    `${imageX}px`;
+
+
+                marker.style.top =
+                    `${imageY}px`;
+
+
+                marker.style.display =
+                    "block";
+
+
+                copyButton.disabled =
+                    false;
+
+            }
+        );
+
+
+        // =========================================
+        // COORDONNEES SOUS LA SOURIS
+        // =========================================
+
+        wrapper.addEventListener(
+            "mousemove",
+            (event) => {
+
+                /*
+                 * Si on déplace la carte,
+                 * on ne fait rien ici.
+                 */
+
+                const rect =
+                    wrapper.getBoundingClientRect();
+
+
+                const wrapperX =
+                    event.clientX -
+                    rect.left;
+
+
+                const wrapperY =
+                    event.clientY -
+                    rect.top;
+
+
+                /*
+                 * Conversion en pixels
+                 * originaux.
+                 */
+
+                const imageX =
+                    (
+                        wrapperX -
+                        offsetX
+                    ) / scale;
+
+
+                const imageY =
+                    (
+                        wrapperY -
+                        offsetY
+                    ) / scale;
+
+
+                /*
+                 * Vérifier si la souris
+                 * est dans l'image.
+                 */
+
+                if (
+                    imageX >= 0 &&
+                    imageY >= 0 &&
+                    imageX <= map.naturalWidth &&
+                    imageY <= map.naturalHeight
+                ) {
+
+                    mousePosition.textContent =
+                        `Souris : X ${Math.round(imageX)} / Y ${Math.round(imageY)}`;
+
+                } else {
+
+                    mousePosition.textContent =
+                        "Souris : hors carte";
+
+                }
+
+            }
+        );
+
+
+        // =========================================
+        // COPIER
+        // =========================================
+
+        copyButton.addEventListener(
+            "click",
+            async () => {
+
+                if (
+                    currentX === null ||
+                    currentY === null
+                ) {
+
+                    return;
+
+                }
+
+
+                const text =
+                    `X: ${currentX}, Y: ${currentY}`;
+
+
+                try {
+
+                    await navigator
+                        .clipboard
+                        .writeText(text);
+
+
+                    copyButton.textContent =
+                        "✅ Copié !";
+
+
+                    setTimeout(
+                        () => {
+
+                            copyButton.textContent =
+                                "📋 Copier les coordonnées";
+
+                        },
+                        1500
+                    );
+
+                } catch (error) {
+
+                    console.error(
+                        "Erreur lors de la copie :",
+                        error
+                    );
+
+                }
+
+            }
+        );
+
+
+        // =========================================
+        // REDIMENSIONNEMENT FENETRE
+        // =========================================
+
+        window.addEventListener(
+            "resize",
+            () => {
+
+                fitMap();
+
+            }
+        );
+
+    </script>
+
+</body>
+
+</html>
