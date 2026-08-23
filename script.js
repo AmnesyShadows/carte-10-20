@@ -2,19 +2,18 @@
 // CONFIGURATION
 // ==========================================
 
-// Les coordonnées utilisées ici correspondent directement
-// aux coordonnées X/Y données par coordonnees.html.
-//
-// Exemple :
-// X = 1547
-// Y = 1012
-//
-// IMPORTANT :
-// Ne plus utiliser lat/lng pour définir tes lieux.
-// Utilise x/y.
-
 let MAP_WIDTH = 0;
 let MAP_HEIGHT = 0;
+
+// ==========================================
+// INITIALISATION DE SUPABASE
+// ==========================================
+const SUPABASE_URL = "https://kdahsggjtmgcjiguidfr.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_ELLTPv_hy2TybFrHKS3Mdg_HadZh9JH";
+const supabaseClient = window.supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_ANON_KEY
+);
 
 // ==========================================
 // INITIALISATION DE LEAFLET
@@ -31,128 +30,222 @@ const map = L.map("map", {
 // ==========================================
 // DONNEES DES LIEUX
 // ==========================================
+let locations = [];
+let types = [];
+// Q*2%LYZ*CSa+D9!
 
-const locations = [
-    // police
-    {
-        name: "Poste Mission Row",
-        type: "police",
-        icon: "🚓",
-        x: 1012,
-        y: 1545,
-        images: [
-            "images/mission_row.jpg",
-        ],
-        description:
-            "Poste principal de police de Mission Row."
-    },
-    {
-        name: "Poste Vespucci",
-        type: "police",
-        icon: "🚓",
-        x: 757,
-        y: 1516,
-        images: [
-            "images/mission_row.jpg",
-            "images/mission_row.jpg",
-        ],
-        description:
-            "Poste principal de police de Vespucci."
-    },
-    {
-        name: "Poste Vinewood",
-        type: "police",
-        icon: "🚓",
-        x: 1043,
-        y: 1380,
-        description:
-            "Poste principal de police de Vinewood."
-    },
-    // other
-    {
-        name: "Flamme Olympique",
-        type: "other",
-        icon: "📍",
-        x: 854,
-        y: 1614,
-        description:
-            "Flamme Olympique."
-    },
-    // hospital
-    {
-        name: "Pillbox Hill Medical Center",
-        type: "hospital",
-        icon: "🏥",
-        x: 1200,
-        y: 900,
-        description:
-            "Centre médical principal de Los Santos."
+async function loadLocations() {
+    const {
+        data,
+        error
+    } = await supabaseClient
+        .from("locations")
+        .select(`
+            *,
+            type:types (
+                id,
+                name,
+                icon,
+                color,
+                afficher_icon
+            )
+        `)
+        .eq("visible", true)
+        .order("name");
+
+    if (error) {
+
+        console.error(
+            "Erreur chargement locations :",
+            error
+        );
+
+        return;
+
     }
 
-];
+    locations = data || [];
+
+    console.log(
+        "Locations récupérées :",
+        locations
+    );
+
+    initializeLocations();
+}
+
+async function loadZones() {
+
+    const {
+        data,
+        error
+    } = await supabaseClient
+        .from("zones")
+        .select(`
+            *,
+            type:types (
+                id,
+                name,
+                icon,
+                color
+            )
+        `)
+        .eq("visible", true)
+        .order("name");
+
+
+    if (error) {
+
+        console.error(
+            "Erreur chargement zones :",
+            error
+        );
+
+        return;
+    }
+
+
+    zones = data || [];
+
+    console.log(
+        "Zones récupérées :",
+        zones
+    );
+
+
+    initializeZones();
+}
+
+async function loadTypes() {
+
+    const {
+        data,
+        error
+    } = await supabaseClient
+        .from("types")
+        .select("*")
+        .order("name");
+
+    if (error) {
+        console.error(
+            "Erreur chargement types :",
+            error
+        );
+        return;
+    }
+
+    types = data || [];
+
+    renderFilters();
+}
+
+function renderFilters() {
+
+    const filtersContainer =
+        document.getElementById("filters");
+
+    filtersContainer.innerHTML = "";
+
+    types.forEach(type => {
+
+        const label =
+            document.createElement("label");
+
+        label.innerHTML = `
+            <input
+                type="checkbox"
+                class="filter"
+                value="${type.id}"
+                checked
+            >
+
+            <span class="filter-icon">
+                ${type.icon || ""}
+            </span>
+
+            ${type.name}
+        `;
+
+        filtersContainer.appendChild(label);
+
+    });
+
+    document
+        .querySelectorAll(".filter")
+        .forEach(filter => {
+
+            filter.addEventListener(
+                "change",
+                () => {
+
+                    updateMarkers();
+                    updateZoneVisibility();
+
+                }
+            );
+
+        });
+}
+
+function updateZoneVisibility() {
+
+    const zoneType =
+        types.find(
+            type =>
+                type.name.toLowerCase() ===
+                "zone"
+        );
+
+    if (!zoneType) {
+        return;
+    }
+
+
+    const zoneFilter =
+        document.querySelector(
+            `.filter[value="${zoneType.id}"]`
+        );
+
+    if (!zoneFilter) {
+        return;
+    }
+
+
+    zoneLayers.forEach(
+        zone => {
+
+            if (zoneFilter.checked) {
+
+                zone.addTo(map);
+
+            } else {
+
+                zone.removeFrom(map);
+
+            }
+
+        }
+    );
+
+}
 
 // ==========================================
 // COULEURS DES CATEGORIES
 // ==========================================
 
-const typeColors = {
-    police: "#2d7dd2",
-    hospital: "#d62828",
-    company: "#a010da",
-    government: "#cfbe24",
-    other: "#888"
-};
+// const typeColors = {
+//     police: "#2d7dd2",
+//     hospital: "#d62828",
+//     company: "#a010da",
+//     government: "#cfbe24",
+//     other: "#888"
+// };
 
 // ==========================================
 // DONNEES DES ZONES
 // ==========================================
 
-const zones = [
-    {
-        name: "Canaux Vespucci",
-        color: "#10d1d1",
-        opacity: 0.25,
-        points: [
-            { x: 730, y: 1533 },
-            { x: 760, y: 1510 },
-            { x: 773, y: 1517 },
-            { x: 792, y: 1533 },
-            { x: 801, y: 1550 },
-            { x: 810, y: 1564 },
-            { x: 749, y: 1599 },
-            { x: 739, y: 1569 },
-            { x: 731, y: 1542 }
-        ],
-        description:
-            "Canaux de Vespucci."
-    },
-    {
-        name: "Mirror Park",
-        color: "#1ac023",
-        opacity: 0.25,
-        points: [
-            { x: 1131, y: 1517 },
-            { x: 1110, y: 1517 },
-            { x: 1094, y: 1499 },
-            { x: 1071, y: 1483 },
-            { x: 1069, y: 1465 },
-            { x: 1053, y: 1449 },
-            { x: 1057, y: 1445 },
-            { x: 1076, y: 1439 },
-            { x: 1094, y: 1436 },
-            { x: 1099, y: 1432 },
-            { x: 1108, y: 1419 },
-            { x: 1127, y: 1425 },
-            { x: 1136, y: 1432 },
-            { x: 1152, y: 1448 },
-            { x: 1173, y: 1473 },
-            { x: 1175, y: 1509 },
-            { x: 1149, y: 1517 }
-        ],
-        description:
-            "Quartier résidentiel de Mirror Park."
-    },
-];
+let zones = [];
 
 // ==========================================
 // MARQUEURS
@@ -164,28 +257,6 @@ const zoneLayers = [];
 // ==========================================
 // CONVERSION X/Y → LEAFLET
 // ==========================================
-
-/*
- * coordonnees.html :
- *
- * X = horizontal
- * Y = vertical depuis le haut de l'image
- *
- *
- * Leaflet avec L.CRS.Simple :
- *
- * latitude  = axe vertical
- * longitude = axe horizontal
- *
- * L'axe vertical de Leaflet est inversé par rapport
- * aux pixels de l'image.
- *
- *
- * Donc :
- *
- * Leaflet latitude  = MAP_HEIGHT - Y
- * Leaflet longitude = X
- */
 
 function imageToLeaflet(x, y) {
     return [
@@ -209,129 +280,206 @@ function zoneToLeaflet(points) {
 // ==========================================
 
 function createMarker(location) {
-    const icon = L.divIcon({
+
+    const type = location.type;
+
+    const icon =
+        type?.afficher_icon
+            ? type.icon
+            : "";
+
+    const color =
+        type?.color || "#888";
+
+
+    // ==========================================
+    // POSITION
+    // ==========================================
+
+    const leafletPosition = [
+        MAP_HEIGHT - location.y,
+        location.x
+    ];
+
+
+    // ==========================================
+    // MARQUEUR
+    // ==========================================
+
+    const markerIcon = L.divIcon({
+
         className: "",
+
         html: `
             <div
                 class="custom-marker"
                 style="
-                    background: ${typeColors[location.type]};
+                    background: ${color};
                 "
             >
-                ${location.icon}
+                ${icon}
             </div>
         `,
+
         iconSize: [34, 34],
+
         iconAnchor: [17, 17]
+
     });
 
+
     const marker = L.marker(
-        imageToLeaflet(
-            location.x,
-            location.y
-        ),
+        leafletPosition,
         {
-            icon: icon
+            icon: markerIcon
         }
     );
+
 
     // ==========================================
     // IMAGES
     // ==========================================
 
-    const images = Array.isArray(location.images)
-        ? location.images
-        : [];
+    const images =
+        Array.isArray(location.images)
+            ? location.images
+            : [];
+
 
     let imageHTML = "";
 
+
     // ==========================================
-    // AUCUNE IMAGE
+    // 0 IMAGE
     // ==========================================
 
     if (images.length === 0) {
+
         imageHTML = "";
+
     }
 
+
     // ==========================================
-    // UNE SEULE IMAGE
+    // 1 IMAGE
     // ==========================================
 
     else if (images.length === 1) {
+
+        const image =
+            typeof images[0] === "string"
+                ? {
+                    path: images[0],
+                    alt: location.name
+                }
+                : images[0];
+
         imageHTML = `
             <div class="popup-gallery single-image">
+
                 <img
-                    src="${images[0]}"
-                    alt="${location.name}"
+                    src="${image.path}"
+                    alt="${image.alt || location.name}"
                     class="popup-image"
                 >
+
             </div>
         `;
+
     }
 
+
     // ==========================================
-    // PLUSIEURS IMAGES
+    // 2+ IMAGES
     // ==========================================
 
     else {
+
+        const firstImage =
+            typeof images[0] === "string"
+                ? {
+                    path: images[0],
+                    alt: location.name
+                }
+                : images[0];
+
         imageHTML = `
             <div
                 class="popup-gallery"
-                data-gallery-id="${location.name
-                    .replace(/[^a-zA-Z0-9]/g, "-")
-                    .toLowerCase()}"
+                data-gallery-id="${location.id}"
             >
+
                 <div class="popup-image-container">
+
                     <img
-                        src="${images[0]}"
-                        alt="${location.name}"
+                        src="${firstImage.path}"
+                        alt="${firstImage.alt || location.name}"
                         class="popup-image"
                     >
+
                     <button
                         type="button"
                         class="gallery-button gallery-prev"
                     >
                         ‹
                     </button>
+
                     <button
                         type="button"
                         class="gallery-button gallery-next"
                     >
                         ›
                     </button>
+
                 </div>
 
                 <div class="gallery-footer">
+
                     <span class="gallery-counter">
                         1 / ${images.length}
                     </span>
+
                 </div>
+
             </div>
         `;
+
     }
+
 
     // ==========================================
     // POPUP
     // ==========================================
 
     marker.bindPopup(`
+
         <div class="popup-content">
+
             ${imageHTML}
 
             <div class="popup-title">
-                ${location.icon}
+
+                ${icon}
                 ${location.name}
+
             </div>
 
             <div class="popup-type">
-                ${getTypeName(location.type)}
+
+                ${type?.name || "Sans type"}
+
             </div>
 
             <div class="popup-description">
-                ${location.description}
+
+                ${location.description || ""}
+
             </div>
+
         </div>
+
     `);
+
 
     // ==========================================
     // GALERIE
@@ -340,12 +488,14 @@ function createMarker(location) {
     marker.on(
         "popupopen",
         () => {
+
             if (images.length <= 1) {
                 return;
             }
 
             const popupElement =
-                marker.getPopup()
+                marker
+                    .getPopup()
                     .getElement();
 
             if (!popupElement) {
@@ -381,44 +531,87 @@ function createMarker(location) {
                     ".gallery-next"
                 );
 
+
             let currentImage = 0;
 
+
+            function getImage(image) {
+
+                if (typeof image === "string") {
+
+                    return {
+                        path: image,
+                        alt: location.name
+                    };
+
+                }
+
+                return image;
+
+            }
+
+
             function showImage(index) {
+
                 currentImage =
-                    (index + images.length)
-                    % images.length;
+                    (
+                        index +
+                        images.length
+                    ) %
+                    images.length;
+
+
+                const image =
+                    getImage(
+                        images[currentImage]
+                    );
+
 
                 imageElement.src =
-                    images[currentImage];
+                    image.path;
+
 
                 imageElement.alt =
+                    image.alt ||
                     `${location.name} - Image ${currentImage + 1}`;
+
 
                 counter.textContent =
                     `${currentImage + 1} / ${images.length}`;
+
             }
+
 
             previousButton.addEventListener(
                 "click",
-                (event) => {
+                event => {
+
                     event.stopPropagation();
+
                     showImage(
                         currentImage - 1
                     );
+
                 }
             );
 
+
             nextButton.addEventListener(
                 "click",
-                (event) => {
+                event => {
+
                     event.stopPropagation();
+
                     showImage(
                         currentImage + 1
                     );
+
                 }
             );
+
         }
     );
+
 
     // ==========================================
     // DONNEES DU LIEU
@@ -427,7 +620,111 @@ function createMarker(location) {
     marker.locationData =
         location;
 
+
     return marker;
+
+}
+
+function initializeLocations() {
+
+    markers.length = 0;
+
+
+    locations.forEach(
+        location => {
+
+            const marker =
+                createMarker(location);
+
+
+            marker.addTo(map);
+
+
+            markers.push(marker);
+
+        }
+    );
+
+
+    updateLocationList();
+
+}
+
+function initializeZones() {
+
+    // Supprime les anciennes zones
+
+    zoneLayers.forEach(
+        layer => layer.removeFrom(map)
+    );
+
+    zoneLayers.length = 0;
+
+
+    // Crée les nouvelles zones
+
+    zones.forEach(zone => {
+
+        if (
+            !Array.isArray(zone.points) ||
+            zone.points.length < 3
+        ) {
+            return;
+        }
+
+
+        const polygon =
+            createZone(zone);
+
+
+        // Les zones restent derrière
+        // les marqueurs
+
+        polygon.addTo(map);
+
+
+        zoneLayers.push(polygon);
+
+    });
+
+
+    // Met les marqueurs au-dessus
+
+    markers.forEach(
+        marker => marker.bringToFront()
+    );
+}
+
+function updateZoneVisibility() {
+
+    const zoneType =
+        types.find(
+            type =>
+                type.name.toLowerCase() === "zone"
+        );
+
+    if (!zoneType) {
+        return;
+    }
+
+    const zoneFilter =
+        document.querySelector(
+            `.filter[value="${zoneType.id}"]`
+        );
+
+    if (!zoneFilter) {
+        return;
+    }
+
+    zoneLayers.forEach(zone => {
+
+        if (zoneFilter.checked) {
+            zone.addTo(map);
+        } else {
+            zone.removeFrom(map);
+        }
+
+    });
 }
 
 // ==========================================
@@ -442,8 +739,7 @@ function createZone(zone) {
         {
             color: zone.color,
             fillColor: zone.color,
-            fillOpacity:
-                zone.opacity ?? 0.25,
+            fillOpacity: 0.25,
             weight: 2,
             opacity: 0.8
         }
@@ -472,12 +768,7 @@ function createZone(zone) {
         "mouseover",
         () => {
             polygon.setStyle({
-
-                fillOpacity:
-                    Math.min(
-                        (zone.opacity ?? 0.25) + 0.15,
-                        0.8
-                    ),
+                fillOpacity: 0.4,
                 weight: 3
             });
         }
@@ -487,9 +778,7 @@ function createZone(zone) {
         "mouseout",
         () => {
             polygon.setStyle({
-                fillOpacity:
-                    zone.opacity ?? 0.25,
-
+                fillOpacity: 0.25,
                 weight: 2
             });
         }
@@ -502,28 +791,12 @@ function createZone(zone) {
 }
 
 // ==========================================
-// TRADUCTION DES CATEGORIES
-// ==========================================
-
-function getTypeName(type) {
-    const names = {
-        police: "Police",
-        hospital: "Hôpital",
-        company: "Entreprise",
-        government: "Gouvernement",
-        other: "Lieu connu"
-    };
-
-    return names[type] || type;
-}
-
-// ==========================================
 // CHARGEMENT DE LA CARTE
 // ==========================================
 
 const mapImage = new Image();
 
-mapImage.onload = function () {
+mapImage.onload = async function () {
 
     // Récupération des vraies dimensions
     // de map.jpg
@@ -567,34 +840,9 @@ mapImage.onload = function () {
     // ==========================================
 
     map.fitBounds(bounds);
-
-    // ==========================================
-    // CREATION DES MARQUEURS
-    // ==========================================
-
-    locations.forEach(
-        location => {
-            const marker =
-                createMarker(location);
-
-            marker.addTo(map);
-
-            markers.push(marker);
-        }
-    );
-
-    // ==========================================
-    // CREATION DES ZONES
-    // ==========================================
-
-    zones.forEach(
-        zone => {
-            const polygon =
-                createZone(zone);
-            polygon.addTo(map);
-            zoneLayers.push(polygon);
-        }
-    );
+    await loadTypes();
+    await loadLocations();
+    await loadZones();
 
     // ==========================================
     // LISTE DES LIEUX
@@ -618,24 +866,6 @@ mapImage.onerror = function () {
 mapImage.src = "map.jpg";
 
 // ==========================================
-// FILTRES
-// ==========================================
-
-const filters =
-    document.querySelectorAll(
-        ".filter"
-    );
-
-filters.forEach(
-    filter => {
-        filter.addEventListener(
-            "change",
-            updateMarkers
-        );
-    }
-);
-
-// ==========================================
 // MISE A JOUR DES MARQUEURS
 // ==========================================
 
@@ -643,16 +873,19 @@ function updateMarkers() {
 
     const activeTypes = [];
 
-    filters.forEach(
-        filter => {
+    document
+        .querySelectorAll(".filter")
+        .forEach(filter => {
+
             if (filter.checked) {
+
                 activeTypes.push(
                     filter.value
                 );
 
             }
-        }
-    );
+
+        });
 
     const searchValue =
         document
@@ -668,7 +901,7 @@ function updateMarkers() {
 
             const typeVisible =
                 activeTypes.includes(
-                    location.type
+                    location.type_id
                 );
 
             const searchVisible =
@@ -720,14 +953,7 @@ const locationList =
 // ==========================================
 
 function updateLocationList(
-    activeTypes = [
-        "police",
-        "hospital",
-        "company",
-        "government",
-        "other"
-    ],
-
+    activeTypes = types.map(type => type.id),
     searchValue = ""
 ) {
     locationList.innerHTML = "";
@@ -737,7 +963,7 @@ function updateLocationList(
             // Vérifier la catégorie
             if (
                 !activeTypes.includes(
-                    location.type
+                    location.type_id
                 )
             ) {
                 return;
@@ -764,14 +990,12 @@ function updateLocationList(
 
             item.innerHTML = `
                 <div class="location-name">
-                    ${location.icon}
+                    ${location.type?.icon || ""}
                     ${location.name}
                 </div>
 
                 <div class="location-type">
-                    ${getTypeName(
-                        location.type
-                    )}
+                    ${location.type?.name || "Autre"}
                 </div>
             `;
 

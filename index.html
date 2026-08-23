@@ -35,60 +35,7 @@
         <!-- SIDEBAR -->
         <aside id="sidebar">
             <h2>Filtres</h2>
-            <div class="filters">
-
-                <label>
-                    <input
-                        type="checkbox"
-                        class="filter"
-                        value="police"
-                        checked
-                    >
-                    <span class="filter-icon police-icon">🚓</span>
-                    Polices
-                </label>
-                <label>
-                    <input
-                        type="checkbox"
-                        class="filter"
-                        value="hospital"
-                        checked
-                    >
-                    <span class="filter-icon">🏥</span>
-                    Hôpitaux
-                </label>
-                <label>
-                    <input
-                        type="checkbox"
-                        class="filter"
-                        value="company"
-                        checked
-                    >
-                    <span class="filter-icon">🚒</span>
-                    Entreprises
-                </label>
-                <label>
-                    <input
-                        type="checkbox"
-                        class="filter"
-                        value="government"
-                        checked
-                    >
-                    <span class="filter-icon">🏛️</span>
-                    Gouvernement
-                </label>
-                <label>
-                    <input
-                        type="checkbox"
-                        class="filter"
-                        value="other"
-                        checked
-                    >
-                    <span class="filter-icon">📍</span>
-                    Autres
-                </label>
-
-            </div>
+            <div class="filters" id="filters"></div>
             <hr>
             <h2>Lieux</h2>
             <div id="location-list"></div>
@@ -102,6 +49,9 @@
             </button>
         </section>
     </main>
+
+    <!-- SUPABASE -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <!-- LEAFLET -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

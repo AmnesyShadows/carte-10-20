@@ -513,3 +513,88 @@ hr {
 .single-image .popup-image {
     border-radius: 6px;
 }
+
+/* =========================
+   POPUP IMAGES
+========================= */
+
+.popup-gallery {
+    width: 100%;
+    margin-bottom: 12px;
+}
+
+.popup-image-container {
+    position: relative;
+    width: 100%;
+}
+
+.popup-image {
+    display: block;
+
+    width: 100%;
+    max-width: 350px;
+    max-height: 250px;
+
+    object-fit: contain;
+
+    border-radius: 6px;
+}
+
+.single-image .popup-image {
+    margin-bottom: 0;
+}
+
+.gallery-button {
+    position: absolute;
+
+    top: 50%;
+
+    transform: translateY(-50%);
+
+    width: 30px;
+    height: 30px;
+
+    border: none;
+    border-radius: 50%;
+
+    background: rgba(0, 0, 0, 0.7);
+
+    color: white;
+
+    font-size: 22px;
+
+    line-height: 30px;
+
+    cursor: pointer;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+}
+
+.gallery-button:hover {
+    background: rgba(0, 0, 0, 0.9);
+}
+
+.gallery-prev {
+    left: 8px;
+}
+
+.gallery-next {
+    right: 8px;
+}
+
+.gallery-footer {
+    text-align: center;
+
+    margin-top: 5px;
+
+    color: #aaa;
+
+    font-size: 12px;
+}
+
+.gallery-counter {
+    user-select: none;
+}

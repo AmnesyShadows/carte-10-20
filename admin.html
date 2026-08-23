@@ -1,0 +1,475 @@
+<!doctype html>
+<html lang="fr">
+
+<head>
+
+    <meta charset="utf-8">
+
+    <meta
+        name="viewport"
+        content="width=device-width,initial-scale=1"
+    >
+
+    <title>GTA V — Administration</title>
+
+    <link
+        rel="stylesheet"
+        href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    >
+
+    <link
+        rel="stylesheet"
+        href="admin.css"
+    >
+
+</head>
+
+
+<body>
+
+
+<header>
+
+    <div>
+        <strong>GTA V</strong>
+        <span>Administration</span>
+    </div>
+
+    <div>
+
+        <a
+            href="index.html"
+            target="_blank"
+        >
+            Voir la carte
+        </a>
+
+        <button
+            id="logout"
+            class="danger hidden"
+        >
+            Déconnexion
+        </button>
+
+    </div>
+
+</header>
+
+
+
+<!-- =====================================================
+     CONNEXION
+===================================================== -->
+
+<section id="login">
+
+    <div class="card">
+
+        <h2>
+            Connexion administrateur
+        </h2>
+
+        <p>
+            Utilise un compte créé dans
+            Supabase Authentication.
+        </p>
+
+
+        <form id="loginForm">
+
+            <label>
+                Email
+
+                <input
+                    id="email"
+                    type="email"
+                    required
+                >
+
+            </label>
+
+
+            <label>
+                Mot de passe
+
+                <input
+                    id="password"
+                    type="password"
+                    required
+                >
+
+            </label>
+
+
+            <button class="primary">
+                Se connecter
+            </button>
+
+
+            <div
+                id="loginError"
+                class="error"
+            ></div>
+
+        </form>
+
+    </div>
+
+</section>
+
+
+
+<!-- =====================================================
+     ADMINISTRATION
+===================================================== -->
+
+<section
+    id="admin"
+    class="hidden"
+>
+
+
+    <!-- =================================================
+         SIDEBAR
+    ================================================== -->
+
+    <aside>
+        <input id="search" placeholder="Rechercher...">
+        
+        <div class="section-header">
+          <div class="section-title">
+              <h2>Lieux</h2>
+
+              <button type="button" class="collapse-button" id="toggle-locations">
+                ⌃
+              </button>
+          </div>
+
+          <button id="new" class="primary" type="button">
+            + Nouveau lieu
+          </button>
+        </div>
+
+        <div id="locations-content">
+            <div id="list"></div>
+        </div>
+
+        <hr>
+
+        <div class="section-header">
+          <div class="section-title">
+              <h2>Zones</h2>
+
+              <button type="button" class="collapse-button" id="toggle-zones">
+                ⌃
+              </button>
+          </div>
+
+          <button id="new-zone" class="primary" type="button">
+            + Nouvelle zone
+          </button>
+        </div>
+
+        <div id="zones-content">
+            <div id="zone-list"></div>
+        </div>
+
+    </aside>
+
+    <!-- =================================================
+         CONTENU PRINCIPAL
+    ================================================== -->
+
+    <main>
+
+
+        <!-- =============================================
+             TITRE
+        ============================================== -->
+
+        <div class="row">
+
+            <div>
+
+                <h2 id="title">
+                    Nouveau lieu
+                </h2>
+
+                <p id="status"></p>
+
+            </div>
+
+
+            <div>
+
+                <button
+                    id="delete"
+                    class="danger hidden"
+                >
+                    Supprimer
+                </button>
+
+
+                <button
+                    id="save"
+                    class="primary"
+                >
+                    Enregistrer
+                </button>
+
+            </div>
+
+        </div>
+
+        <!-- =============================================
+             FORMULAIRE
+        ============================================== -->
+
+        <form id="form">
+
+
+            <!-- NOM -->
+
+            <label>
+
+                Nom
+
+                <input
+                    id="name"
+                    required
+                >
+
+            </label>
+
+
+
+            <!-- TYPE -->
+
+            <label>
+
+                Type
+
+                <select
+                    id="type"
+                    required
+                ></select>
+
+            </label>
+
+
+
+            <!-- X -->
+
+            <label id="x-field">
+
+                X
+
+                <input
+                    id="x"
+                    type="number"
+                    step="1"
+                    required
+                >
+
+            </label>
+
+
+
+            <!-- Y -->
+
+            <label id="y-field">
+
+                Y
+
+                <input
+                    id="y"
+                    type="number"
+                    step="1"
+                    required
+                >
+
+            </label>
+
+
+
+            <!-- COULEUR ZONE -->
+
+            <label
+                id="color-field"
+                class="hidden"
+            >
+
+                Couleur
+
+                <input
+                    id="color"
+                    type="color"
+                    value="#10d1d1"
+                >
+
+            </label>
+
+
+
+            <!-- DESCRIPTION -->
+
+            <label class="full">
+
+                Description
+
+                <textarea
+                    id="description"
+                    rows="4"
+                ></textarea>
+
+            </label>
+
+
+
+            <!-- VISIBILITÉ -->
+
+            <label class="check full">
+
+                <input
+                    id="visible"
+                    type="checkbox"
+                    checked
+                >
+
+                Visible sur la carte
+
+            </label>
+
+
+
+            <!-- =========================================
+                 CONTRÔLES ZONE
+            ========================================== -->
+
+            <div
+                id="zone-controls"
+                class="full hidden"
+            >
+
+                <div class="row">
+
+                    <h3>
+                        Zone
+                    </h3>
+
+                    <span id="zone-point-count">
+                        Points : 0
+                    </span>
+
+                </div>
+
+
+                <div class="row">
+
+                    <button
+                        type="button"
+                        id="undo-zone-point"
+                    >
+                        ↩ Retirer le dernier point
+                    </button>
+
+
+                    <button
+                        type="button"
+                        id="clear-zone"
+                        class="danger"
+                    >
+                        Effacer la zone
+                    </button>
+
+                </div>
+
+            </div>
+
+
+
+            <!-- =========================================
+                 CARTE
+            ========================================== -->
+
+            <div class="full">
+
+                <!-- <h3>
+                    Choisir les coordonnées
+                </h3>
+
+                <p>
+                    En mode Lieu : clique pour placer
+                    le point.
+                    <br>
+                    En mode Zone : clique pour ajouter
+                    les sommets.
+                </p> -->
+
+
+                <div id="map"></div>
+
+            </div>
+
+
+
+            <!-- =========================================
+                 IMAGES
+            ========================================== -->
+
+            <div
+                id="images-field"
+                class="full"
+            >
+
+                <div class="row">
+
+                    <h3>
+                        Images
+                    </h3>
+
+
+                    <label class="upload">
+
+                        + Ajouter des images
+
+                        <input
+                            id="files"
+                            type="file"
+                            accept="image/*"
+                            multiple
+                            hidden
+                        >
+
+                    </label>
+
+                </div>
+
+
+                <div id="images"></div>
+
+            </div>
+
+
+        </form>
+
+    </main>
+
+</section>
+
+
+
+<!-- =====================================================
+     SCRIPTS
+===================================================== -->
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script src="admin.js"></script>
+
+
+</body>
+
+</html>
