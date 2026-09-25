@@ -39,6 +39,12 @@ button {
     cursor: pointer;
 }
 
+.agent-name,
+.agent-info,
+.agent-fti {
+    display: block;
+}
+
 
 /* =========================================================
    HEADER

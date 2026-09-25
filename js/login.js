@@ -8,6 +8,7 @@ const SUPABASE_URL =
 const SUPABASE_ANON_KEY =
     "sb_publishable_ELLTPv_hy2TybFrHKS3Mdg_HadZh9JH";
 
+
 window.supabaseClient =
     window.supabase.createClient(
         SUPABASE_URL,
@@ -31,6 +32,7 @@ function isAdminPage() {
 
     return window.location.pathname
         .includes("/admin/");
+
 }
 
 
@@ -65,20 +67,23 @@ function createLoginPanel() {
             </h2>
 
             <p>
-                Utilise un compte pour passer en mode Administrateur.
+                Utilise ton identifiant administrateur pour passer en mode Administrateur.
             </p>
+
 
             <form id="loginForm">
 
                 <label>
-                    Email
+                    Identifiant
 
                     <input
-                        id="email"
-                        type="email"
+                        id="pseudo"
+                        type="text"
+                        autocomplete="username"
                         required
                     >
                 </label>
+
 
                 <label>
                     Mot de passe
@@ -86,9 +91,11 @@ function createLoginPanel() {
                     <input
                         id="password"
                         type="password"
+                        autocomplete="current-password"
                         required
                     >
                 </label>
+
 
                 <button
                     class="primary"
@@ -96,6 +103,7 @@ function createLoginPanel() {
                 >
                     Se connecter
                 </button>
+
 
                 <div
                     id="loginError"
@@ -109,6 +117,7 @@ function createLoginPanel() {
 
 
     document.body.appendChild(panel);
+
 }
 
 
@@ -126,11 +135,12 @@ function showLoginPanel() {
         .remove("hidden");
 
 
-    if (login$("email")) {
+    if (login$("pseudo")) {
 
-        login$("email").focus();
+        login$("pseudo").focus();
 
     }
+
 }
 
 
@@ -145,6 +155,7 @@ async function initLogin() {
     setupLoginEvents();
 
     await checkSession();
+
 }
 
 
@@ -171,6 +182,7 @@ async function checkSession() {
         );
 
         return;
+
     }
 
 
@@ -195,6 +207,7 @@ async function checkSession() {
             }
         )
     );
+
 }
 
 
@@ -264,6 +277,7 @@ function showConnected(session) {
         }
 
     }
+
 }
 
 
@@ -327,6 +341,7 @@ function showDisconnected() {
         showLoginPanel();
 
     }
+
 }
 
 
@@ -377,6 +392,7 @@ function setupLoginEvents() {
         );
 
     }
+
 }
 
 
@@ -397,8 +413,8 @@ async function login(event) {
     }
 
 
-    const email =
-        login$("email")
+    const pseudo =
+        login$("pseudo")
             .value
             .trim();
 
@@ -408,33 +424,122 @@ async function login(event) {
             .value;
 
 
-    const {
-        error
-    } =
-        await window.supabaseClient.auth.signInWithPassword({
-            email,
-            password
-        });
-
-
-    if (error) {
+    if (!pseudo || !password) {
 
         if (login$("loginError")) {
 
             login$("loginError")
                 .textContent =
-                "Email ou mot de passe incorrect.";
+                "Identifiant ou mot de passe incorrect.";
 
         }
 
         return;
+
     }
 
+
+    // ========================================================
+    // RECHERCHE DE L'ADMINISTRATEUR
+    // ========================================================
+
+    const {
+        data: adminUser,
+        error: adminError
+    } =
+        await window.supabaseClient
+            .from("admin_users")
+            .select(
+                "email"
+            )
+            .eq(
+                "pseudo",
+                pseudo
+            )
+            .maybeSingle();
+
+
+    if (adminError) {
+
+        console.error(
+            "Erreur recherche administrateur :",
+            adminError
+        );
+
+
+        if (login$("loginError")) {
+
+            login$("loginError")
+                .textContent =
+                "Erreur lors de la connexion.";
+
+        }
+
+        return;
+
+    }
+
+
+    if (!adminUser) {
+
+        if (login$("loginError")) {
+
+            login$("loginError")
+                .textContent =
+                "Identifiant ou mot de passe incorrect.";
+
+        }
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // CONNEXION SUPABASE AUTH
+    // ========================================================
+
+    const {
+        error
+    } =
+        await window.supabaseClient.auth
+            .signInWithPassword({
+                email:
+                    adminUser.email,
+                password
+            });
+
+
+    if (error) {
+
+        console.error(
+            "Erreur connexion :",
+            error
+        );
+
+
+        if (login$("loginError")) {
+
+            login$("loginError")
+                .textContent =
+                "Identifiant ou mot de passe incorrect.";
+
+        }
+
+        return;
+
+    }
+
+
+    // ========================================================
+    // CONNEXION RÉUSSIE
+    // ========================================================
 
     login$("loginForm").reset();
 
 
     await checkSession();
+
 }
 
 
@@ -458,6 +563,7 @@ async function logout() {
         );
 
         return;
+
     }
 
 
@@ -475,10 +581,12 @@ async function logout() {
         showLoginPanel();
 
         return;
+
     }
 
 
     await checkSession();
+
 }
 
 
@@ -511,7 +619,8 @@ window.supabaseClient.auth.onAuthStateChange(
 // ============================================================
 
 if (
-    document.readyState === "loading"
+    document.readyState ===
+    "loading"
 ) {
 
     document.addEventListener(

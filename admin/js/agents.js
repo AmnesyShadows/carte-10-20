@@ -251,11 +251,13 @@ async function loadAgents() {
         agents
     );
 
+
     renderFtiSelect();
 
     renderAgentList();
 
 }
+
 
 // ============================================================
 // LISTE DES FTI
@@ -281,6 +283,7 @@ function renderFtiSelect() {
                 grades.find(
                     g => g.id === agent.grade
                 );
+
 
             return grade?.grade !== "Rookie";
 
@@ -387,6 +390,7 @@ function renderAgentList() {
 
         `;
 
+
         return;
 
     }
@@ -422,51 +426,58 @@ function renderAgentList() {
                 );
 
 
-            item.innerHTML = `
+            // Recherche du FTI
+            const ftiAgent =
+                agent.fti
+                    ? agents.find(
+                        item =>
+                            item.id === agent.fti
+                    )
+                    : null;
 
+
+            item.innerHTML = `
                 <div>
 
-                    <strong>
-
+                    <strong class="agent-name">
+                        ${escapeHtml(agent.matricule || "")}
+                        —
                         ${escapeHtml(
-                            agent.prenom
+                            `${agent.prenom || ""} ${agent.nom || ""}`.trim()
                         )}
-
-                        ${escapeHtml(
-                            agent.nom
-                        )}
-
                     </strong>
 
-                    <span>
-
-                        ${escapeHtml(
-                            agent.matricule
-                        )}
-
+                    <span class="agent-info">
+                        ${
+                            grade?.grade
+                                ? escapeHtml(grade.grade)
+                                : "Sans grade"
+                        }
+                        —
+                        ${
+                            agent.actif
+                                ? "Actif"
+                                : "Inactif"
+                        }
                     </span>
 
-                </div>
-
-
-                <div>
-
                     ${
-                        grade?.grade
-                            ? escapeHtml(
-                                grade.grade
-                            )
+                        grade?.grade === "Rookie"
+                            ? `
+                                <span class="agent-fti">
+                                    ${
+                                        ftiAgent
+                                            ? `FTI — ${escapeHtml(
+                                                `${ftiAgent.prenom || ""} ${ftiAgent.nom || ""}`.trim()
+                                            )}`
+                                            : "Pas de FTI"
+                                    }
+                                </span>
+                            `
                             : ""
                     }
 
-                    ${
-                        agent.actif
-                            ? ""
-                            : " — Inactif"
-                    }
-
                 </div>
-
             `;
 
 
@@ -502,28 +513,46 @@ function resetForm() {
         null;
 
 
-    agents$("title").textContent = "Nouvel agent";
+    agents$("title").textContent =
+        "Nouvel agent";
 
-    agents$("status").textContent = "";
+
+    agents$("status").textContent =
+        "";
 
 
     agents$("delete")
         .classList
         .add("hidden");
 
-    agents$("nom").value = "";
 
-    agents$("prenom").value ="";
+    agents$("nom").value =
+        "";
 
-    agents$("matricule").value = "";
 
-    agents$("grade").value = "";
+    agents$("prenom").value =
+        "";
 
-    agents$("date_arrivee").value = "";
 
-    agents$("fti").value = "";
+    agents$("matricule").value =
+        "";
 
-    agents$("actif").checked = true;
+
+    agents$("grade").value =
+        "";
+
+
+    agents$("date_arrivee").value =
+        "";
+
+
+    agents$("fti").value =
+        "";
+
+
+    agents$("actif").checked =
+        true;
+
 
     renderAgentList();
 
@@ -565,11 +594,14 @@ function editAgent(agent) {
     agents$("grade").value =
         agent.grade || "";
 
+
     agents$("date_arrivee").value =
         agent.date_arrivee || "";
 
+
     agents$("fti").value =
         agent.fti || "";
+
 
     agents$("actif").checked =
         agent.actif === true;
@@ -596,20 +628,23 @@ async function saveAgent() {
             .value
             .trim();
 
+
     const prenom =
         agents$("prenom")
             .value
             .trim();
+
 
     const matricule =
         agents$("matricule")
             .value
             .trim();
 
+
     const grade =
-        agents$("grade")
-            .value ||
+        agents$("grade").value ||
         null;
+
 
     const date_arrivee =
         agents$("date_arrivee").value ||
@@ -619,6 +654,7 @@ async function saveAgent() {
     const fti =
         agents$("fti").value ||
         null;
+
 
     const actif =
         agents$("actif")
@@ -861,6 +897,7 @@ async function startAgents() {
             error
         );
 
+
         return;
 
     }
@@ -871,6 +908,7 @@ async function startAgents() {
         console.log(
             "Aucune session utilisateur."
         );
+
 
         return;
 
