@@ -27,12 +27,13 @@ const map = L.map("map", {
     attributionControl: false
 });
 
+map.on("zoom", updateMarkerScale);
+
 // ==========================================
 // DONNEES DES LIEUX
 // ==========================================
 let locations = [];
 let types = [];
-// Q*2%LYZ*CSa+D9!
 
 async function loadLocations() {
     const {
@@ -47,7 +48,8 @@ async function loadLocations() {
                 name,
                 icon,
                 color,
-                afficher_icon
+                afficher_icon,
+                priority
             )
         `)
         .eq("visible", true)
@@ -331,7 +333,8 @@ function createMarker(location) {
     const marker = L.marker(
         leafletPosition,
         {
-            icon: markerIcon
+            icon: markerIcon,
+            zIndexOffset: (100 - location.type.priority) * 100
         }
     );
 
@@ -625,6 +628,47 @@ function createMarker(location) {
 
 }
 
+// ==========================================
+// TAILLE DES MARQUEURS SELON LE ZOOM
+// ==========================================
+
+function updateMarkerScale() {
+
+    const zoom = map.getZoom();
+
+    // Taille normale à zoom 0
+    // 1.2 = vitesse de réduction/agrandissement
+    const scale = Math.max(
+        0.45,
+        Math.min(
+            1.6,
+            Math.pow(1.2, zoom)
+        )
+    );
+
+    markers.forEach(marker => {
+
+        const element = marker.getElement();
+
+        if (!element) {
+            return;
+        }
+
+        const markerElement =
+            element.querySelector(".custom-marker");
+
+        if (!markerElement) {
+            return;
+        }
+
+        markerElement.style.transform =
+            `scale(${scale})`;
+
+        markerElement.style.transformOrigin =
+            "center center";
+    });
+}
+
 function initializeLocations() {
 
     markers.length = 0;
@@ -647,6 +691,8 @@ function initializeLocations() {
 
 
     updateLocationList();
+
+    updateMarkerScale();
 
 }
 
@@ -831,7 +877,7 @@ mapImage.onload = async function () {
     // ==========================================
 
     L.imageOverlay(
-        "map.jpg",
+        "images/map.jpg",
         bounds
     ).addTo(map);
 
@@ -863,7 +909,7 @@ mapImage.onerror = function () {
 };
 
 // Lancement du chargement
-mapImage.src = "map.jpg";
+mapImage.src = "images/map.jpg";
 
 // ==========================================
 // MISE A JOUR DES MARQUEURS
